@@ -1,0 +1,13 @@
+{
+  "name": "hlt06-claim-denial-appeal-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "node evals/run_eval.js",
+    "db:view": "npm run --prefix backend db:view",
+    "db:studio": "npm run --prefix backend db:studio",
+    "db:clean": "npm run --prefix backend db:clean"
+  }
+}
+

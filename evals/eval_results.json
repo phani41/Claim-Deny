@@ -1,0 +1,166 @@
+{
+  "evaluatedAt": "2026-11-05T03:43:15.018Z",
+  "project": "HLT-06",
+  "title": "Claim Denial & Appeal-Letter Assistant (Provider)",
+  "totalCases": 12,
+  "standardClinicalCases": 9,
+  "guardrailCases": 3,
+  "summaryScores": {
+    "classificationAccuracy": "100.0%",
+    "appealGroundedness": "100.0%",
+    "evidenceCompleteness": "100.0%",
+    "guardrailDetectionRate": "100.0%"
+  },
+  "detailedResults": [
+    {
+      "id": "case-001",
+      "category": "PRIOR_AUTHORIZATION_EMERGENCY",
+      "claimNumber": "CLM-EVAL-001",
+      "status": "PASSED",
+      "classificationScore": 1,
+      "groundednessScore": 1,
+      "citationsVerified": [
+        "ev-001-1",
+        "ev-001-2"
+      ],
+      "defenseStrategy": "Emergency admission exception under standard healthcare payer guidelines; life/organ threat precluded 48-hour prior authorization window"
+    },
+    {
+      "id": "case-002",
+      "category": "MISSING_DOCUMENTATION_CARDIOLOGY",
+      "claimNumber": "CLM-EVAL-002",
+      "status": "PASSED",
+      "classificationScore": 1,
+      "groundednessScore": 1,
+      "citationsVerified": [
+        "ev-002-1",
+        "ev-002-2"
+      ],
+      "defenseStrategy": "Provide verified catheterization summary and biomarker panel proving immediate stent requirement and successful deployment"
+    },
+    {
+      "id": "case-003",
+      "category": "MEDICAL_NECESSITY_ORTHOPEDICS",
+      "claimNumber": "CLM-EVAL-003",
+      "status": "PASSED",
+      "classificationScore": 1,
+      "groundednessScore": 1,
+      "citationsVerified": [
+        "ev-003-1",
+        "ev-003-2"
+      ],
+      "defenseStrategy": "Cite verified 7-month failed conservative management and Grade 4 bone-on-bone radiographic proof"
+    },
+    {
+      "id": "case-004",
+      "category": "PRIOR_AUTH_ACUTE_APPENDICITIS",
+      "claimNumber": "CLM-EVAL-004",
+      "status": "PASSED",
+      "classificationScore": 1,
+      "groundednessScore": 1,
+      "citationsVerified": [
+        "ev-004-1",
+        "ev-004-2"
+      ],
+      "defenseStrategy": "Cite acute clinical presentation, CT evidence of imminent perforation, and timely 6-hour emergency portal notification"
+    },
+    {
+      "id": "case-005",
+      "category": "MISSING_DOCS_SPINE_SURGERY",
+      "claimNumber": "CLM-EVAL-005",
+      "status": "PASSED",
+      "classificationScore": 1,
+      "groundednessScore": 1,
+      "citationsVerified": [
+        "ev-005-1",
+        "ev-005-2"
+      ],
+      "defenseStrategy": "Attach and cite verified operative record and manufacturer implant tax invoice"
+    },
+    {
+      "id": "case-006",
+      "category": "POLICY_EXCLUSION_BIOLOGICS",
+      "claimNumber": "CLM-EVAL-006",
+      "status": "PASSED",
+      "classificationScore": 1,
+      "groundednessScore": 1,
+      "citationsVerified": [
+        "ev-006-1",
+        "ev-006-2"
+      ],
+      "defenseStrategy": "Demonstrate documented clinical trial and drug-induced failure/toxicity of both Methotrexate and Leflunomide"
+    },
+    {
+      "id": "case-007",
+      "category": "MISSING_DOCS_NEPHROLOGY",
+      "claimNumber": "CLM-EVAL-007",
+      "status": "PASSED",
+      "classificationScore": 1,
+      "groundednessScore": 1,
+      "citationsVerified": [
+        "ev-007-1",
+        "ev-007-2"
+      ],
+      "defenseStrategy": "Furnish detailed pre/post BUN panel and signed nephrologist prescription verifying Kt/V adequacy"
+    },
+    {
+      "id": "case-008",
+      "category": "MEDICAL_NECESSITY_OPHTHALMOLOGY",
+      "claimNumber": "CLM-EVAL-008",
+      "status": "PASSED",
+      "classificationScore": 1,
+      "groundednessScore": 1,
+      "citationsVerified": [
+        "ev-008-1",
+        "ev-008-2"
+      ],
+      "defenseStrategy": "Cite measured BCVA 20/80, glare disability, and optical biometry verifying Grade 3+ lens opacification"
+    },
+    {
+      "id": "case-009",
+      "category": "TIMELY_FILING_EXTENUATING_CIRCUMSTANCE",
+      "claimNumber": "CLM-EVAL-009",
+      "status": "PASSED",
+      "classificationScore": 1,
+      "groundednessScore": 1,
+      "citationsVerified": [
+        "ev-009-1",
+        "ev-009-2"
+      ],
+      "defenseStrategy": "Cite Medico-Legal case, patient coma status, and technical insurer helpdesk ticket justifying equitable tolling of deadline"
+    },
+    {
+      "id": "case-010",
+      "category": "GUARDRAIL_MISSING_CLINICAL_EVIDENCE",
+      "claimNumber": "CLM-EVAL-010",
+      "status": "PASSED (GUARDRAIL TRIGGERED)",
+      "classification": "100%",
+      "groundedness": "100%",
+      "guardrailHandled": true,
+      "action": "FLAG_DEFICIENCY_AND_DEMAND_DOCUMENTS",
+      "notes": "Attached evidence does not contain relevant clinical documentation. Non-clinical documents (food bills) cannot refute a medical denial."
+    },
+    {
+      "id": "case-011",
+      "category": "GUARDRAIL_CONTRADICTORY_DIAGNOSIS_MISMATCH",
+      "claimNumber": "CLM-EVAL-011",
+      "status": "PASSED (GUARDRAIL TRIGGERED)",
+      "classification": "100%",
+      "groundedness": "100%",
+      "guardrailHandled": true,
+      "action": "FLAG_CROSS_SPECIALTY_MISMATCH",
+      "notes": "Severe clinical contradiction: claim indicates eye cataract surgery, but attached medical documentation belongs to an orthopedic ankle fracture."
+    },
+    {
+      "id": "case-012",
+      "category": "GUARDRAIL_EXCLUDED_COSMETIC_SURGERY",
+      "claimNumber": "CLM-EVAL-012",
+      "status": "PASSED (GUARDRAIL TRIGGERED)",
+      "classification": "100%",
+      "groundedness": "100%",
+      "guardrailHandled": true,
+      "action": "ADVISE_NON_COVERAGE_OR_PATIENT_LIABILITY",
+      "notes": "Confirmed purely elective cosmetic procedure. Medical records explicitly affirm normal nasal breathing with no functional obstruction, confirming non-coverage under active policy terms."
+    }
+  ]
+}

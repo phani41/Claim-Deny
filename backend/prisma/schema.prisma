@@ -1,0 +1,340 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  ADMIN
+  BILLING_SPECIALIST
+  COMPLIANCE_REVIEWER
+  REVIEWER
+  PROVIDER
+}
+
+enum OrganizationType {
+  HOSPITAL
+  INSURANCE_COMPANY
+}
+
+enum ClaimStatus {
+  DRAFT
+  RECEIVED
+  SUBMITTED
+  DENIED
+  UNDER_REVIEW
+  APPEAL_DRAFT
+  SUBMITTED_FOR_REVIEW
+  APPROVED
+  REJECTED
+  APPEALED
+  PAID
+  CLOSED
+}
+
+enum DenialStatus {
+  OPEN
+  APPEALED
+  RESOLVED
+  CLOSED
+}
+
+enum EvidenceType {
+  CLINICAL_NOTE
+  IMAGING_REPORT
+  LAB_RESULT
+  ORDER
+  AUTHORIZATION
+  REFERRAL
+  TREATMENT_HISTORY
+  OTHER
+}
+
+enum AppealLetterStatus {
+  DRAFT
+  REQUIRES_CORRECTION
+  IN_REVIEW
+  SUBMITTED_FOR_REVIEW
+  APPROVED
+  REJECTED
+  SUBMITTED
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PROCESSING
+  EXTRACTED
+  INDEXED
+  FAILED
+}
+
+model Organization {
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  type               OrganizationType
+  active             Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  users              User[]
+  hospitalClaims     Claim[]             @relation("HospitalClaims")
+  insuranceClaims    Claim[]             @relation("InsuranceClaims")
+  knowledgeDocuments KnowledgeDocument[]
+
+  @@index([type, active])
+}
+
+model User {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  displayName       String
+  passwordHash      String
+  role              UserRole       @default(BILLING_SPECIALIST)
+  active            Boolean        @default(true)
+  organizationId    String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  organization      Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  claims            Claim[]        @relation("ClaimOwner")
+  createdEvidence   Evidence[]     @relation("EvidenceCreator")
+  authoredLetters   AppealLetter[] @relation("AppealAuthor")
+  reviewLetters     AppealLetter[] @relation("AppealReviewer")
+  uploadedDocuments Document[]     @relation("DocumentUploader")
+  claimReviews      ClaimReview[]  @relation("ReviewerClaimReviews")
+  appealReviews     AppealReview[] @relation("ReviewerAppealReviews")
+
+  @@index([role])
+  @@index([organizationId])
+}
+
+model Claim {
+  id                      String         @id @default(cuid())
+  ownerId                 String
+  claimNumber             String
+  patientName             String?
+  hospitalName            String?
+  payerName               String
+  policyNumber            String?
+  diagnosisCode           String?
+  procedureCode           String?
+  treatmentDescription    String?
+  hospitalOrganizationId  String?
+  insuranceOrganizationId String?
+  serviceDate             DateTime
+  amount                  Decimal
+  currency                String         @default("INR")
+  status                  ClaimStatus    @default(SUBMITTED)
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  owner                   User           @relation("ClaimOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  hospitalOrganization    Organization?  @relation("HospitalClaims", fields: [hospitalOrganizationId], references: [id], onDelete: SetNull)
+  insuranceOrganization   Organization?  @relation("InsuranceClaims", fields: [insuranceOrganizationId], references: [id], onDelete: SetNull)
+  denials                 Denial[]
+  evidences               Evidence[]
+  appealLetters           AppealLetter[]
+  documents               Document[]
+  claimReviews            ClaimReview[]
+
+  @@unique([ownerId, claimNumber])
+  @@index([ownerId, status, createdAt])
+  @@index([ownerId, serviceDate])
+  @@index([hospitalOrganizationId, status])
+  @@index([insuranceOrganizationId, status])
+}
+
+model ClaimReview {
+  id                String   @id @default(cuid())
+  claimId           String
+  reviewerId        String
+  decision          String   // "APPROVED" or "DENIED"
+  denialCode        String?
+  denialExplanation String?
+  reviewComments    String?
+  createdAt         DateTime @default(now())
+  claim             Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  reviewer          User     @relation("ReviewerClaimReviews", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([claimId, createdAt])
+  @@index([reviewerId, createdAt])
+}
+
+model DenialReason {
+  code          String                     @id
+  title         String
+  description   String
+  active        Boolean                    @default(true)
+  createdAt     DateTime                   @default(now())
+  updatedAt     DateTime                   @updatedAt
+  denials       Denial[]
+  evidenceRules DenialReasonEvidenceRule[]
+
+  @@index([active, title])
+}
+
+model DenialReasonEvidenceRule {
+  denialReasonCode String
+  evidenceType     EvidenceType
+  required         Boolean      @default(true)
+  guidance         String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  denialReason     DenialReason @relation(fields: [denialReasonCode], references: [code], onDelete: Cascade)
+
+  @@id([denialReasonCode, evidenceType])
+  @@index([evidenceType, required])
+}
+
+model Denial {
+  id               String       @id @default(cuid())
+  claimId          String
+  denialReasonCode String
+  reasonText       String
+  status           DenialStatus @default(OPEN)
+  denialDate       DateTime
+  payerReference   String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  claim            Claim        @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  denialReason     DenialReason @relation(fields: [denialReasonCode], references: [code], onDelete: Restrict)
+
+  @@index([claimId, createdAt])
+  @@index([denialReasonCode, status])
+}
+
+model Evidence {
+  id              String           @id @default(cuid())
+  claimId         String
+  createdById     String
+  type            EvidenceType
+  sourceLabel     String
+  summary         String
+  sourceDate      DateTime?
+  documentId      String?
+  content         String?
+  sourceReference String?
+  pageNumber      Int?
+  sectionName     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  claim           Claim            @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  createdBy       User             @relation("EvidenceCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  document        Document?        @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  citations       AppealCitation[]
+
+  @@index([claimId, type, createdAt])
+  @@index([createdById, createdAt])
+  @@index([documentId, pageNumber])
+}
+
+model Document {
+  id               String         @id @default(cuid())
+  claimId          String
+  uploadedById     String
+  type             EvidenceType
+  originalName     String
+  storageKey       String         @unique
+  mimeType         String
+  sizeBytes        Int
+  status           DocumentStatus @default(UPLOADED)
+  pageCount        Int?
+  sectionNamesJson String?
+  processingError  String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  claim            Claim          @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  uploadedBy       User           @relation("DocumentUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  evidences        Evidence[]
+
+  @@index([claimId, status, createdAt])
+  @@index([uploadedById, createdAt])
+}
+
+model AppealLetter {
+  id                 String             @id @default(cuid())
+  claimId            String
+  authorId           String
+  reviewerId         String?
+  generationKey      String?            @unique
+  subject            String
+  content            String
+  revisionNumber     Int                @default(1)
+  status             AppealLetterStatus @default(DRAFT)
+  grounded           Boolean            @default(false)
+  requiresCorrection Boolean            @default(false)
+  reviewerComment    String?
+  submittedAt        DateTime?
+  reviewedAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  claim              Claim              @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  author             User               @relation("AppealAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  reviewer           User?              @relation("AppealReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  citations          AppealCitation[]
+  appealReviews      AppealReview[]
+
+  @@index([claimId, createdAt])
+  @@index([reviewerId, status])
+}
+
+model AppealReview {
+  id              String       @id @default(cuid())
+  appealLetterId  String
+  reviewerId      String
+  decision        String       // "APPROVED" or "REJECTED"
+  reviewerComment String
+  createdAt       DateTime     @default(now())
+  appealLetter    AppealLetter @relation(fields: [appealLetterId], references: [id], onDelete: Cascade)
+  reviewer        User         @relation("ReviewerAppealReviews", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([appealLetterId, createdAt])
+  @@index([reviewerId, createdAt])
+}
+
+model AppealCitation {
+  appealLetterId String
+  evidenceId     String
+  excerpt        String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+  appealLetter   AppealLetter @relation(fields: [appealLetterId], references: [id], onDelete: Cascade)
+  evidence       Evidence     @relation(fields: [evidenceId], references: [id], onDelete: Restrict)
+
+  @@id([appealLetterId, evidenceId])
+  @@index([evidenceId])
+}
+
+model KnowledgeDocument {
+  id             String        @id @default(cuid())
+  title          String
+  fileName       String
+  filePath       String
+  category       String        // "INSURANCE_POLICY", "CLAIM_GUIDELINE", "DENIAL_GUIDELINE", "MEDICAL_GUIDELINE", "APPEAL_GUIDELINE"
+  organizationId String?
+  scope          String        @default("SHARED_REFERENCE_SCOPE") // "INSURANCE_POLICY_SCOPE", "SHARED_REFERENCE_SCOPE", "HOSPITAL_SCOPE"
+  mimeType       String        @default("application/pdf")
+  fileSize       Int           @default(0)
+  indexingStatus String        @default("INDEXED") // "PENDING", "PROCESSING", "INDEXED", "FAILED"
+  pageCount      Int?          @default(1)
+  indexedAt      DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+
+  @@index([category, scope])
+  @@index([organizationId, category])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String   // "CLAIM_CREATED", "CLAIM_REVIEWED", "APPEAL_DRAFTED", etc.
+  entityType String   // "Claim", "AppealLetter", "Document", "User"
+  entityId   String
+  details    String?  // JSON string
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+  @@index([userId, createdAt])
+}

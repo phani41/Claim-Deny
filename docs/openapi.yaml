@@ -1,0 +1,877 @@
+openapi: 3.0.3
+info:
+  title: HLT-06 Claim Denial & Grounded Appeal Letter Assistant API
+  description: |
+    Comprehensive OpenAPI specification for HLT-06: A healthcare provider-side AI assistant
+    designed to streamline insurance claim denial analysis, clinical evidence attachment,
+    and prompt-grounded appeal letter generation with verifiable audit citations.
+  version: 1.0.0
+  contact:
+    name: HLT-06 Development Team
+    email: support@healthcare-ai.org
+
+servers:
+  - url: http://localhost:3000/api
+    description: Primary Express Backend API Server
+  - url: http://localhost:8001
+    description: Internal FastAPI AI Reasoning Microservice
+
+tags:
+  - name: Authentication
+    description: User authentication, JWT issuance, and session identity
+  - name: Claims
+    description: Hospital claim intake, provider claims management, and insurer adjudication
+  - name: Documents & Evidence
+    description: Clinical PDF/DOCX ingestion, parsing, predefined attachments, and evidence grounding
+  - name: Denials & Policies
+    description: Denial records, standardized denial codes (AUTH-01, DOC-01), and payer requirements
+  - name: Appeal Letters
+    description: GLM-grounded appeal letter generation, legal citations, review, and approval
+  - name: Admin & Knowledge Base
+    description: User role management, audit trails, and institutional policy documents
+  - name: AI Microservice
+    description: Internal Python FastAPI endpoints for LLM classification, parsing, and grounding
+
+paths:
+  # ==========================================
+  # AUTHENTICATION
+  # ==========================================
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticates user credentials and returns a signed JWT with user role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: billing@demo.in
+                password:
+                  type: string
+                  format: password
+                  example: Demo@123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid email or password
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Public user profile and organization info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /health:
+    get:
+      tags:
+        - Authentication
+      summary: System health check
+      description: Returns service status and SQLite connectivity check.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: backend
+                  database:
+                    type: string
+                    example: ok
+
+  /stats:
+    get:
+      tags:
+        - Claims
+      summary: Get dashboard statistics
+      description: Returns aggregate counts of total, submitted, approved, and denied claims for the user organization.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Summary dashboard metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      organizationType:
+                        type: string
+                      totalClaims:
+                        type: integer
+                      submittedClaims:
+                        type: integer
+                      approvedClaims:
+                        type: integer
+                      deniedClaims:
+                        type: integer
+                      pendingAppeals:
+                        type: integer
+
+  # ==========================================
+  # CLAIMS MANAGEMENT
+  # ==========================================
+  /claims:
+    get:
+      tags:
+        - Claims
+      summary: List claims
+      description: Returns paginated claims owned by or accessible to the caller's organization.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ClaimStatus'
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated claims list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimListResponse'
+
+    post:
+      tags:
+        - Claims
+      summary: Create a new claim
+      description: Initiates a new healthcare claim. Restricted to BILLING_SPECIALIST and ADMIN.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClaimRequest'
+      responses:
+        '201':
+          description: Claim created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'
+
+  /claims/{id}:
+    get:
+      tags:
+        - Claims
+      summary: Get claim by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detailed claim record including denials, documents, and reviews
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimDetail'
+        '404':
+          description: Claim not found
+
+  /claims/{id}/review:
+    post:
+      tags:
+        - Claims
+      summary: Adjudicate / review claim
+      description: Performed by insurance REVIEWER to APPROVE or DENY a submitted claim.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - decision
+              properties:
+                decision:
+                  type: string
+                  enum: [APPROVED, DENIED]
+                denialCode:
+                  type: string
+                  example: AUTH-01
+                denialExplanation:
+                  type: string
+                  example: Missing prior authorization prior to surgery.
+                reviewComments:
+                  type: string
+      responses:
+        '200':
+          description: Claim adjudication recorded successfully
+
+  /claims/{id}/ai/analyze-denial:
+    post:
+      tags:
+        - Claims
+      summary: Run AI denial root-cause analysis
+      description: Evaluates denial reasons with GLM to extract required clinical rebuttal arguments.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                denialId:
+                  type: string
+      responses:
+        '200':
+          description: Clinical analysis and document recommendations
+
+  # ==========================================
+  # DOCUMENTS & EVIDENCE
+  # ==========================================
+  /claims/{id}/documents:
+    get:
+      tags:
+        - Documents & Evidence
+      summary: List documents attached to claim
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of documents
+
+    post:
+      tags:
+        - Documents & Evidence
+      summary: Upload PDF/DOCX clinical document
+      description: Uploads a clinical file, parses medical text via Docling/parser, and indexes evidence.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - type
+              properties:
+                file:
+                  type: string
+                  format: binary
+                type:
+                  $ref: '#/components/schemas/EvidenceType'
+                sourceDate:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Document processed and indexed into evidence
+
+  /claims/{id}/documents/attach-predefined:
+    post:
+      tags:
+        - Documents & Evidence
+      summary: Attach pre-verified clinical document
+      description: Generates a standard signed clinical PDF buffer (e.g. Prior Authorization, Operative Note) and indexes evidence.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                templateKey:
+                  type: string
+                  enum: [AUTHORIZATION, CLINICAL_NOTE, IMAGING_REPORT, LAB_RESULT, ORDER]
+                  example: AUTHORIZATION
+      responses:
+        '201':
+          description: Predefined document synthesized and evidence indexed
+
+  /documents/{id}/download:
+    get:
+      tags:
+        - Documents & Evidence
+      summary: Download document PDF binary
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Binary file stream
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /evidences:
+    get:
+      tags:
+        - Documents & Evidence
+      summary: List verified evidence excerpts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: claimId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Verified evidence list
+
+  # ==========================================
+  # APPEAL LETTERS & GENERATION
+  # ==========================================
+  /claims/{id}/appealletters/generate:
+    post:
+      tags:
+        - Appeal Letters
+      summary: Generate grounded appeal letter with GLM
+      description: Loads claim evidence directly into GLM context, constructs legal rebuttal, and validates citations.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                denialId:
+                  type: string
+                generationKey:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Grounded appeal draft generated with legal citations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppealLetter'
+
+  /appealletters/{id}:
+    get:
+      tags:
+        - Appeal Letters
+      summary: Get appeal letter by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Appeal letter detail with citations and review history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppealLetter'
+
+    patch:
+      tags:
+        - Appeal Letters
+      summary: Edit appeal letter content
+      description: Biller updates letter draft. Human editing clears the strict aiGenerated flag.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                expectedUpdatedAt:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Letter updated
+
+  /appealletters/{id}/submit:
+    post:
+      tags:
+        - Appeal Letters
+      summary: Submit appeal letter to reviewer
+      description: Moves appeal letter status to SUBMITTED_FOR_REVIEW for compliance evaluation.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Appeal submitted to review queue
+
+  /appealletters/{id}/approve:
+    post:
+      tags:
+        - Appeal Letters
+      summary: Reviewer approves appeal letter
+      description: Payer Reviewer or Compliance Specialist approves the appeal, overturning the denial.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reviewerComment:
+                  type: string
+                acceptMissingEvidence:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Appeal approved; claim status updated to APPROVED
+
+  /appealletters/{id}/reject:
+    post:
+      tags:
+        - Appeal Letters
+      summary: Reviewer rejects appeal letter
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reviewerComment
+              properties:
+                reviewerComment:
+                  type: string
+      responses:
+        '200':
+          description: Appeal rejected with feedback
+
+  # ==========================================
+  # DENIALS & POLICIES
+  # ==========================================
+  /denials:
+    get:
+      tags:
+        - Denials & Policies
+      summary: List denials
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of claim denial records
+
+  /denialreasons:
+    get:
+      tags:
+        - Denials & Policies
+      summary: List reference denial reason codes
+      description: Returns catalog of payer denial codes (AUTH-01, MED-01, DOC-01) and evidence requirements.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Denial reason catalog
+
+  # ==========================================
+  # AI MICROSERVICE (INTERNAL PYTHON)
+  # ==========================================
+  /documents/process:
+    post:
+      tags:
+        - AI Microservice
+      summary: Parse and segment clinical document
+      description: Extracts raw text, detects sections, and divides text into segment chunks with provenance.
+      security:
+        - AIServiceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - storageKey
+              properties:
+                storageKey:
+                  type: string
+                originalName:
+                  type: string
+                mimeType:
+                  type: string
+      responses:
+        '200':
+          description: Extracted segments and chunks
+
+  /ai/classify:
+    post:
+      tags:
+        - AI Microservice
+      summary: Classify claim denial category
+      security:
+        - AIServiceAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Denial category classification
+
+# ==========================================
+# COMPONENTS & SCHEMAS
+# ==========================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Authenticate with a Bearer token issued by /auth/login.
+    AIServiceAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Shared API key for internal Node-to-Python communication.
+
+  schemas:
+    ClaimStatus:
+      type: string
+      enum:
+        - DRAFT
+        - RECEIVED
+        - SUBMITTED
+        - UNDER_REVIEW
+        - DENIED
+        - APPEAL_DRAFT
+        - SUBMITTED_FOR_REVIEW
+        - APPROVED
+        - REJECTED
+        - APPEALED
+        - PAID
+        - CLOSED
+
+    EvidenceType:
+      type: string
+      enum:
+        - CLINICAL_NOTE
+        - IMAGING_REPORT
+        - LAB_RESULT
+        - ORDER
+        - AUTHORIZATION
+        - REFERRAL
+        - TREATMENT_HISTORY
+        - OTHER
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, BILLING_SPECIALIST, COMPLIANCE_REVIEWER, REVIEWER, PROVIDER]
+        organizationId:
+          type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+
+    CreateClaimRequest:
+      type: object
+      required:
+        - claimNumber
+        - serviceDate
+        - amount
+      properties:
+        claimNumber:
+          type: string
+          example: CLM-2026-001
+        patientName:
+          type: string
+          example: Ramesh Kumar
+        diagnosisCode:
+          type: string
+          example: K80.00
+        procedureCode:
+          type: string
+          example: '47562'
+        amount:
+          type: string
+          example: '75000.00'
+        currency:
+          type: string
+          default: INR
+        payerName:
+          type: string
+          example: Bharat Health Assurance
+        insuranceOrganizationId:
+          type: string
+          example: org-ins-01
+
+    Claim:
+      type: object
+      properties:
+        id:
+          type: string
+        claimNumber:
+          type: string
+        patientName:
+          type: string
+        diagnosisCode:
+          type: string
+        procedureCode:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          $ref: '#/components/schemas/ClaimStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ClaimDetail:
+      allOf:
+        - $ref: '#/components/schemas/Claim'
+        - type: object
+          properties:
+            denials:
+              type: array
+              items:
+                $ref: '#/components/schemas/Denial'
+            documents:
+              type: array
+              items:
+                $ref: '#/components/schemas/Document'
+
+    ClaimListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Claim'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            totalPages:
+              type: integer
+
+    Denial:
+      type: object
+      properties:
+        id:
+          type: string
+        claimId:
+          type: string
+        denialReasonCode:
+          type: string
+        reasonText:
+          type: string
+        status:
+          type: string
+        denialDate:
+          type: string
+          format: date-time
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        claimId:
+          type: string
+        originalName:
+          type: string
+        type:
+          $ref: '#/components/schemas/EvidenceType'
+        status:
+          type: string
+          enum: [UPLOADED, PROCESSING, EXTRACTED, INDEXED, FAILED]
+        pageCount:
+          type: integer
+
+    AppealLetter:
+      type: object
+      properties:
+        id:
+          type: string
+        claimId:
+          type: string
+        content:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, REQUIRES_CORRECTION, IN_REVIEW, SUBMITTED_FOR_REVIEW, APPROVED, REJECTED, SUBMITTED]
+        aiGenerated:
+          type: boolean
+        confidenceScore:
+          type: number
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppealCitation'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AppealCitation:
+      type: object
+      properties:
+        id:
+          type: string
+        sourceReference:
+          type: string
+        pageNumber:
+          type: integer
+        quote:
+          type: string
+

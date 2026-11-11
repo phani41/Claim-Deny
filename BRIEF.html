@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Capstone — HLT-06 · Claim Denial &amp; Appeal-Letter Assistant (Provider)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F6F8; --surface:#FFFFFF; --sunk:#FAFBFC;
+  --ink:#14171C; --soft:#3A414B; --muted:#5B626D; --faint:#8A919C;
+  --line:#E2E6EC; --line2:#CDD3DC;
+  --accent:#1C7F6B; --accent-d:#12594B; --wash:#E6F3EF;
+  --green:#1C7F55; --green-w:#E8F3ED; --amber:#9A6414; --amber-w:#F7EFDD; --red:#9A2F2F; --red-w:#F7E7E7;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --serif:"IBM Plex Serif",Georgia,serif; --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.58;-webkit-font-smoothing:antialiased;
+  padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+.wrap{max-width:900px;margin:0 auto;padding:0 24px}
+a{color:var(--accent-d)}
+.tok{font-family:var(--mono);font-size:.82em;background:var(--sunk);border:1px solid var(--line);
+  padding:.06em .45em;border-radius:5px;color:var(--accent-d);white-space:nowrap}
+
+header{background:var(--surface);border-bottom:1px solid var(--line)}
+.hd{padding:46px 0 36px;text-align:center}
+.kick{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.03em;text-transform:uppercase;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid var(--line2);color:var(--accent-d);background:var(--wash);letter-spacing:.01em;text-transform:none}
+.pill.core{color:var(--green);border-color:#BfE0CF;background:var(--green-w)}
+.pill.stretch{color:var(--amber);border-color:#E7D4A6;background:var(--amber-w)}
+.pill.advanced{color:var(--red);border-color:#E6BcbC;background:var(--red-w)}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(27px,5vw,42px);line-height:1.1;letter-spacing:-.012em;margin:0 auto 12px;max-width:22ch}
+.lead{font-size:18px;color:var(--soft);line-height:1.5;max-width:60ch;margin:0 auto 22px}
+.metar{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.meta{display:inline-flex;gap:7px;align-items:center;font-size:12.5px;color:var(--muted);background:var(--sunk);border:1px solid var(--line);border-radius:7px;padding:6px 11px}
+.meta b{color:var(--ink);font-weight:600}
+
+nav.toc{background:var(--sunk);border-bottom:1px solid var(--line);font-size:12.5px}
+nav.toc .wrap{display:flex;gap:4px 18px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px}
+nav.toc a{color:var(--muted);text-decoration:none;font-family:var(--mono);font-size:12px}
+nav.toc a:hover{color:var(--accent-d)}
+
+.sec{padding:40px 0}
+.sec + .sec{border-top:1px solid var(--line)}
+.lbl{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+.lbl .n{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600}
+.lbl h2{font-family:var(--serif);font-weight:600;font-size:21px;margin:0;letter-spacing:-.01em}
+.lbl .ln{flex:1;height:1px;background:var(--line)}
+.note{font-size:13px;color:var(--muted);margin:-8px 0 18px}
+
+p{margin:0 0 13px;color:var(--soft);max-width:72ch}
+p b,li b{color:var(--ink);font-weight:600}
+.body b{color:var(--ink)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:15px 17px}
+.card .k{font-size:11px;font-weight:600;color:var(--faint);letter-spacing:.03em;text-transform:uppercase;margin-bottom:8px}
+.card .v{font-size:13.5px;color:var(--soft);line-height:1.5}
+.card.pain{border-left:3px solid var(--amber)}
+.card.goal{border-left:3px solid var(--accent)}
+
+.success{margin-top:20px;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.success .k{font-size:11.5px;font-weight:600;color:var(--faint);letter-spacing:.03em;text-transform:uppercase;margin-bottom:11px}
+.success ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:9px 22px}
+@media(max-width:560px){.success ul{grid-template-columns:1fr}}
+.success li{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--soft);line-height:1.45}
+.ck{flex:none;margin-top:3px;width:14px;height:14px;border-radius:50%;background:var(--green-w);color:var(--green);display:grid;place-items:center;font-size:9px;font-weight:700}
+
+dl.gloss{margin:0;display:grid;grid-template-columns:auto 1fr;gap:0}
+dl.gloss div{display:contents}
+dl.gloss dt{font-family:var(--mono);font-size:12.5px;color:var(--accent-d);font-weight:600;padding:9px 16px 9px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+dl.gloss dd{margin:0;font-size:13.5px;color:var(--soft);padding:9px 0;border-bottom:1px solid var(--line);line-height:1.45}
+@media(max-width:600px){dl.gloss{grid-template-columns:1fr}dl.gloss dt{padding-bottom:2px;border-bottom:none}dl.gloss dd{padding-top:2px}}
+
+.example{background:var(--wash);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:16px 18px;font-size:14.5px;color:var(--soft);line-height:1.6}
+.example .k{font-size:11px;font-weight:600;color:var(--accent-d);letter-spacing:.03em;text-transform:uppercase;margin-bottom:8px}
+
+/* pictorial flow diagram */
+.flowd{max-width:640px;margin:8px auto 0}
+.io{display:block;width:fit-content;max-width:90%;margin:0 auto;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--muted);background:var(--surface);border:1px dashed var(--line2);border-radius:22px;padding:8px 18px;text-align:center}
+.io.in{color:var(--accent-d);border-color:var(--accent);background:var(--wash)}
+.io.out{color:var(--green);border-color:#BfE0CF;background:var(--green-w)}
+.conn{display:flex;justify-content:center;padding:4px 0}
+.conn .bar{width:2px;height:15px;background:var(--line2)}
+.node{display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:12px 15px;box-shadow:0 1px 2px rgba(20,23,28,.04)}
+.node .ibox{flex:none;width:40px;height:40px;border-radius:10px;background:var(--accent);display:grid;place-items:center;color:#fff}
+.node .ibox svg{width:22px;height:22px;display:block}
+.node .nm{font-weight:600;font-size:14px;color:var(--ink);line-height:1.22}
+.node .nm b{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700;margin-right:7px}
+.node .sub{font-size:12px;color:var(--muted);line-height:1.4;margin-top:3px}
+/* parallel group */
+.prow{position:relative;border:1.5px dashed var(--accent);border-radius:14px;padding:24px 12px 12px;background:var(--wash)}
+.ptag{position:absolute;top:-11px;left:16px;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent-d);background:var(--surface);border:1px solid var(--accent);border-radius:11px;padding:3px 10px;letter-spacing:.02em}
+.pcells{display:flex;gap:10px;align-items:stretch}
+.pcell{flex:1;display:flex}
+.pcell .node{width:100%}
+@media(max-width:620px){.pcells{flex-direction:column}}
+/* three-tier integration */
+.tiers{display:flex;align-items:stretch;gap:10px;margin-top:8px;flex-wrap:wrap}
+.tier{flex:1;min-width:190px;background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:14px 15px}
+.tier.ai{border-color:var(--accent);background:var(--wash)}
+.tier .tl{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--ink);margin-bottom:6px}
+.tier .tl svg{width:17px;height:17px;color:var(--accent-d)}
+.tier .td{font-size:12.5px;color:var(--muted);line-height:1.45}
+.tar{align-self:center;color:var(--accent);font-size:20px;font-weight:700;flex:none}
+@media(max-width:660px){.tiers{flex-direction:column}.tar{transform:rotate(90deg);align-self:center}}
+.tnote{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.55}
+.comp{display:flex;align-items:flex-start;gap:13px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:9px}
+.comp .ix{flex:none;width:26px;height:26px;border-radius:7px;background:var(--wash);color:var(--accent-d);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.comp .nm{font-weight:600;font-size:14px;color:var(--ink);margin-bottom:2px}
+.comp .rl{font-size:13px;color:var(--muted);line-height:1.45}
+
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:15px 16px}
+.flow .st{font-family:var(--mono);font-size:12px;color:var(--soft);background:var(--surface);border:1px solid var(--line2);border-radius:7px;padding:6px 10px}
+.flow .ar{color:var(--line2);font-size:14px}
+
+ul.ticks{list-style:none;margin:0;padding:0}
+ul.ticks li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--soft);line-height:1.5;margin-bottom:9px}
+ul.ticks li .ck{margin-top:3px}
+ul.ab{list-style:none;margin:0;padding:0}
+ul.ab li{position:relative;padding-left:18px;font-size:14px;color:var(--soft);line-height:1.5;margin-bottom:8px}
+ul.ab li::before{content:"";position:absolute;left:3px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+
+.ents{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:640px){.ents{grid-template-columns:1fr}}
+.ent{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 13px;font-size:13px;color:var(--soft)}
+.ent b{font-family:var(--mono);font-size:12.5px;color:var(--accent-d)}
+
+.plat{background:var(--surface);border:1px solid var(--line2);border-radius:11px;padding:4px 18px;margin-top:6px}
+.plat .pr{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}
+.plat .pr:last-child{border-bottom:none}
+.plat .pr .t{flex:none;width:200px;font-weight:600;font-size:13.5px;color:var(--ink)}
+.plat .pr .d{font-size:13.5px;color:var(--muted);line-height:1.5}
+@media(max-width:640px){.plat .pr{flex-direction:column;gap:3px}.plat .pr .t{width:auto}}
+
+.tool .lic.pub{background:#EEF1FC;color:var(--accent-d);border-color:#CDD6F5}
+.subh{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--faint);letter-spacing:.04em;text-transform:uppercase;margin:18px 0 8px}
+.eps{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:6px}
+.ep{display:grid;grid-template-columns:62px 1fr;grid-template-areas:"m pa" "m pu";gap:1px 11px;padding:10px 13px;border-bottom:1px solid var(--line);background:var(--surface)}
+.ep:last-child{border-bottom:none}
+.ep .m{grid-area:m;align-self:start;font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:var(--muted);border-radius:5px;padding:3px 0;text-align:center}
+.ep .m.get{background:var(--green)}.ep .m.post{background:var(--accent)}.ep .m.patch{background:var(--amber)}
+.ep .pa{grid-area:pa;font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:600}
+.ep .pu{grid-area:pu;font-size:12.5px;color:var(--muted);line-height:1.4}
+.fsdiag{font-family:var(--mono);font-size:12px;color:var(--soft);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:14px;white-space:pre;overflow-x:auto;line-height:1.6}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:6px}
+@media(max-width:640px){.tools{grid-template-columns:1fr}}
+.tool{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+.tool .th{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.tool .nm{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent-d)}
+.tool .lic{font-family:var(--mono);font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px;background:var(--green-w);color:var(--green);border:1px solid #BfE0CF}
+.tool .lic.apache{background:var(--amber-w);color:var(--amber);border-color:#E7D4A6}
+.tool .pp{font-size:12.5px;color:var(--muted);line-height:1.45}
+.archnote{margin-top:14px;background:var(--wash);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:9px;padding:13px 15px;font-size:13.5px;color:var(--soft);line-height:1.55}
+.archnote b{color:var(--ink)}
+.days{display:grid;gap:10px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:15px 17px}
+.day .dh{display:flex;align-items:baseline;gap:11px;margin-bottom:9px}
+.day .dn{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:var(--accent);padding:3px 9px;border-radius:6px}
+.day .dt{font-weight:600;font-size:15px;color:var(--ink)}
+.day ul{margin:0;padding-left:18px}
+.day li{font-size:13.5px;color:var(--soft);line-height:1.5;margin-bottom:4px}
+.day .gate{margin-top:10px;font-size:12.5px;color:var(--accent-d);background:var(--wash);border:1px solid var(--line);border-radius:7px;padding:8px 11px}
+.day .gate b{color:var(--accent-d)}
+
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(max-width:600px){.rules{grid-template-columns:1fr}}
+.rule{display:flex;gap:10px;align-items:flex-start;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13px;color:var(--soft);line-height:1.45}
+.rule .d{flex:none;margin-top:5px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+
+.viva{background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:6px 18px}
+.viva .q{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--soft);line-height:1.5}
+.viva .q:last-child{border-bottom:none}
+.viva .q .n{font-family:var(--serif);font-weight:600;color:var(--accent);font-size:15px;flex:none}
+
+footer{background:var(--surface);border-top:1px solid var(--line);padding:26px 0 40px;margin-top:10px}
+footer .f{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--faint);letter-spacing:.02em;text-transform:uppercase;font-weight:600}
+
+@media print{
+  nav.toc{display:none}body{background:#fff;font-size:11.5px}
+  .sec{padding:16px 0;break-inside:avoid}.card,.comp,.day,.example,.plat{break-inside:avoid}
+  header{border-bottom:2px solid #000}
+}
+</style>
+</head>
+<body>
+<header><div class="wrap hd">
+  <div class="kick"><span>FDE Capstone</span><span>·</span><span>Healthcare — Revenue Cycle</span>
+    <span class="pill core">Core</span></div>
+  <h1>HLT-06 · Claim Denial &amp; Appeal-Letter Assistant (Provider)</h1>
+  <p class="lead">Analyse a claim denial and draft a grounded, evidence-backed appeal letter.</p>
+  <div class="metar">
+    <span class="meta"><b>AI core</b> Denial-reason analysis + grounded appeal drafting</span>
+    <span class="meta"><b>Build</b> 4 days · reuse your base</span>
+    <span class="meta"><b>Deploy</b> deferred · local</span>
+  </div>
+</div></header>
+
+<nav class="toc"><div class="wrap"><a href="#problem">01 · The problem</a><a href="#primer">02 · Domain primer</a><a href="#gloss">03 · Glossary</a><a href="#example">04 · Worked example</a><a href="#arch">05 · Architecture</a><a href="#data">06 · Data model</a><a href="#func">07 · Functional reqs</a><a href="#fullstack">08 · Fullstack</a><a href="#ai">09 · AI engineering</a><a href="#ui">10 · UI / screens</a><a href="#nfr">11 · NFRs</a><a href="#build">12 · Build path</a><a href="#prove">13 · Must prove</a><a href="#deliver">14 · Deliverables</a><a href="#rules">15 · Ground rules</a><a href="#viva">16 · Viva</a></div></nav>
+
+<main class="wrap">
+
+<section class="sec" id="problem">
+  <div class="lbl"><span class="n">01</span><h2>The problem</h2><span class="ln"></span></div>
+  <div class="body"><p>Payers deny claims for many reasons; providers lose revenue when denials aren&#x27;t appealed well. Writing a strong appeal means matching denial reason to evidence in the record.</p><p>Appeals are time-consuming and inconsistent; weak appeals fail; revenue leaks.</p></div>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card pain"><div class="k">The pain today</div><div class="v">Appeals are time-consuming and inconsistent; weak appeals fail; revenue leaks.</div></div>
+    <div class="card"><div class="k">Who it's for</div><div class="v">Revenue-cycle / billing specialist; Provider office manager; Compliance</div></div>
+  </div>
+  <div class="grid2" style="margin-top:12px"><div class="card goal"><div class="k">Goal</div><div class="v">Understand each denial reason precisely</div></div><div class="card goal"><div class="k">Goal</div><div class="v">Assemble the right evidence</div></div><div class="card goal"><div class="k">Goal</div><div class="v">Draft a strong, grounded appeal</div></div></div>
+  <div class="success"><div class="k">Success metrics — what actually gets checked</div><ul><li><span class="ck">✓</span><span>Denial-reason classification accuracy</span></li><li><span class="ck">✓</span><span>Appeal groundedness</span></li><li><span class="ck">✓</span><span>Evidence-completeness of drafts</span></li></ul></div>
+</section>
+
+<section class="sec" id="primer">
+  <div class="lbl"><span class="n">02</span><h2>Domain primer — read this first</h2><span class="ln"></span></div>
+  <p class="note">You are not expected to know this industry. This explains it in plain English.</p>
+  <div class="example"><div class="k">In plain English</div>Insurers deny some provider claims, and providers lose money when denials aren&#x27;t appealed well. A strong appeal matches the denial reason to evidence in the record. You&#x27;re building the assistant that analyses a denial and drafts a grounded, evidence-backed appeal letter — citing only real record facts, with a specialist finalising it.</div>
+  <div style="margin-top:16px"><div class="card"><div class="k">The people in this story</div><div class="v"><ul class="ab"><li>Revenue-cycle / billing specialist</li><li>Provider office manager</li><li>Compliance</li></ul></div></div></div>
+</section>
+
+<section class="sec" id="gloss">
+  <div class="lbl"><span class="n">03</span><h2>Glossary — the words you'll meet</h2><span class="ln"></span></div>
+  <dl class="gloss"><div><dt>Claim denial</dt><dd>The insurer refusing to pay a claim.</dd></div><div><dt>Appeal</dt><dd>Challenging a denial to overturn it.</dd></div><div><dt>Denial code / reason</dt><dd>Why the claim was denied.</dd></div><div><dt>Evidence</dt><dd>Record facts that rebut the denial.</dd></div><div><dt>Revenue cycle</dt><dd>The money side of healthcare (billing, claims).</dd></div><div><dt>Grounded appeal</dt><dd>An appeal using only real record facts.</dd></div><div><dt>Rebuttal</dt><dd>The argument against the denial.</dd></div><div><dt>Recoverable value</dt><dd>Money that could be won back.</dd></div></dl>
+</section>
+
+<section class="sec" id="example">
+  <div class="lbl"><span class="n">04</span><h2>Worked example — one trip through the system</h2><span class="ln"></span></div>
+  <div class="example"><div class="k">Concrete walkthrough</div>A claim is denied &#x27;not medically necessary&#x27;. The tool identifies the evidence needed, pulls from the record (&#x27;two prior conservative treatments failed; imaging shows X&#x27;), and drafts an appeal citing each fact. The billing specialist reviews, tweaks, and sends. No clinical claims are made up.</div>
+</section>
+
+<section class="sec" id="arch">
+  <div class="lbl"><span class="n">05</span><h2>System architecture — the parts to build</h2><span class="ln"></span></div>
+  <p class="note">More than a basic form with one AI call — build each part as a small, clear piece and wire them together. Here's the whole flow:</p>
+  <div class="flowd"><div class="io in">▶&nbsp;&nbsp;Denial in</div><div class="conn"><div class="bar"></div></div><div class="node"><div class="ibox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h7l5 5v15H6z"/><path d="M13 2v5h5"/><path d="M9 13h6M9 17h6"/></svg></div><div><div class="nm"><b>01</b>Denial Classifier</div><div class="sub">Parses the denial reason/code.</div></div></div><div class="conn"><div class="bar"></div></div><div class="prow"><span class="ptag">⫲&nbsp; run in parallel</span><div class="pcells"><div class="pcell"><div class="node"><div class="ibox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.3"/><path d="M12 1.8v2.6M12 19.6v2.6M3.3 7l2.3 1.3M18.4 15.7l2.3 1.3M3.3 17l2.3-1.3M18.4 8.3l2.3-1.3M1.8 12h2.6M19.6 12h2.6"/></svg></div><div><div class="nm"><b>02</b>Evidence Mapper</div><div class="sub">What&#x27;s needed to rebut it.</div></div></div></div><div class="pcell"><div class="node"><div class="ibox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Z"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div><div><div class="nm"><b>03</b>Record Puller (grounded)</div><div class="sub">Supporting facts from the record.</div></div></div></div></div></div><div class="conn"><div class="bar"></div></div><div class="node"><div class="ibox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12.5h5"/></svg></div><div><div class="nm"><b>04</b>Appeal Drafter (LLM)</div><div class="sub">Grounded letter with citations.</div></div></div><div class="conn"><div class="bar"></div></div><div class="node"><div class="ibox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 4-6.5 8-6.5s8 2.1 8 6.5"/></svg></div><div><div class="nm"><b>05</b>Specialist Review</div><div class="sub">Finalise/approve.</div></div></div><div class="conn"><div class="bar"></div></div><div class="io out">✓&nbsp;&nbsp;Specialist finalise</div></div>
+  <div style="margin-top:22px"><div class="card goal"><div class="k">What to get right (focus here)</div><div class="v"><ul class="ab"><li>Appeal cites only real evidence</li><li>No made up clinical statements</li><li>Denial-reason accuracy measured</li><li>Appeal-success likelihood (stretch)</li></ul></div></div></div>
+</section>
+
+<section class="sec" id="data">
+  <div class="lbl"><span class="n">06</span><h2>Data model — seed entities</h2><span class="ln"></span></div>
+  <p class="note">Your starting entities. Turn these into an ERD with keys, cardinality and PII handling.</p>
+  <div class="ents"><div class="ent"><b>Claim</b> — id, codes[], amount</div><div class="ent"><b>Denial</b> — claimId, code, reasonText</div><div class="ent"><b>DenialReason</b> — code, rebuttalEvidenceNeeded[]</div><div class="ent"><b>Evidence</b> — claimId, type, source</div><div class="ent"><b>AppealLetter</b> — claimId, text, citations[]</div><div class="ent"><b>Reviewer</b> — id, approved</div></div>
+</section>
+
+<section class="sec" id="func">
+  <div class="lbl"><span class="n">07</span><h2>Functional requirements</h2><span class="ln"></span></div>
+  <ul class="ab"><li>Parse the denial code/reason</li><li>Identify the evidence needed to overturn it</li><li>Pull supporting facts from the record (grounded)</li><li>Draft the appeal citing the evidence</li><li>Specialist edits &amp; approves</li></ul>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card goal"><div class="k">In scope (MVP)</div><div class="v"><ul class="ab"><li>Ingest denial + claim + record</li><li>Classify the denial reason</li><li>Map available evidence to rebut the reason</li><li>Draft a grounded appeal letter</li><li>Specialist review &amp; finalise</li></ul></div></div>
+    <div class="card pain"><div class="k">Out of scope</div><div class="v"><ul class="ab"><li>Payer submission integration</li><li>The appeal outcome</li></ul></div></div>
+  </div>
+</section>
+
+<section class="sec" id="fullstack">
+  <div class="lbl"><span class="n">08</span><h2>Fullstack build — frontend · backend · data</h2><span class="ln"></span></div>
+  <p class="note">This is 45% of the marks (data model + UI/UX + backend &amp; APIs). You reuse your Foundation app, so extend it well — don't rebuild it.</p>
+  <div class="subh">Frontend (React — reuse your shell)</div>
+  <div class="comp"><div class="ix">•</div><div><div class="nm">Components &amp; state</div><div class="rl">Pages, components, hooks, a typed api/ client; useState/useContext, TanStack Query for server data.</div></div></div><div class="comp"><div class="ix">•</div><div><div class="nm">Routing &amp; auth</div><div class="rl">React Router + protected routes, reusing your Foundation auth guard.</div></div></div><div class="comp"><div class="ix">•</div><div><div class="nm">Honest screen states</div><div class="rl">Every screen handles empty / loading / error / success — no blank page on failure.</div></div></div>
+  <div class="subh">Backend (Node + Express — reused)</div>
+  <div class="comp"><div class="ix">•</div><div><div class="nm">Layered API</div><div class="rl">routes → controllers → services → data-access. Logic out of routes.</div></div></div><div class="comp"><div class="ix">•</div><div><div class="nm">Auth &amp; isolation</div><div class="rl">JWT + authz middleware; per-user/tenant isolation on every route — and test it.</div></div></div><div class="comp"><div class="ix">•</div><div><div class="nm">Validation, errors, logs</div><div class="rl">Zod on every input; structured errors {code,message,details}; pino logging (mask PII).</div></div></div>
+  <div class="subh">API endpoints (extend your app)</div>
+  <div class="eps"><div class="ep"><span class="m post">POST</span><span class="pa">/api/auth/login</span><span class="pu">Get a JWT (reused).</span></div><div class="ep"><span class="m get">GET</span><span class="pa">/api/claims</span><span class="pu">List claims — scoped to the caller; paginate.</span></div><div class="ep"><span class="m post">POST</span><span class="pa">/api/claims</span><span class="pu">Create one — validate the body.</span></div><div class="ep"><span class="m get">GET</span><span class="pa">/api/claims/:id</span><span class="pu">Get one claim — 403 if not yours.</span></div><div class="ep"><span class="m get">GET</span><span class="pa">/api/denials</span><span class="pu">List denials — scoped to the caller; paginate.</span></div><div class="ep"><span class="m get">GET</span><span class="pa">/api/denials/:id</span><span class="pu">Get one denial — 403 if not yours.</span></div><div class="ep"><span class="m get">GET</span><span class="pa">/api/denialreasons</span><span class="pu">List denialreasons — scoped to the caller; paginate.</span></div><div class="ep"><span class="m get">GET</span><span class="pa">/api/denialreasons/:id</span><span class="pu">Get one denialreason — 403 if not yours.</span></div><div class="ep"><span class="m post">POST</span><span class="pa">/api/ai/run</span><span class="pu">Node forwards to the Python AI service and returns the grounded result.</span></div><div class="ep"><span class="m get">GET</span><span class="pa">/api/health</span><span class="pu">Liveness — app + AI service reachable.</span></div></div>
+  <div class="subh">Data layer</div>
+  <div class="comp"><div class="ix">•</div><div><div class="nm">Schema &amp; migrations</div><div class="rl">ERD → tables (keys + relationships); Prisma/Knex migrations; commit a seed script.</div></div></div><div class="comp"><div class="ix">•</div><div><div class="nm">PII &amp; reproducibility</div><div class="rl">Mark + mask sensitive fields; no raw secrets; reproducible DB from seed.</div></div></div>
+  <div class="subh">How it fits together</div>
+  <div class="tiers"><div class="tier"><div class="tl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>React (reused shell)</div><div class="td">auth guard · routing · honest empty/loading/error/success states</div></div><div class="tar">→</div><div class="tier"><div class="tl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>Node / Express (reused)</div><div class="td">JWT + authz · Zod validation · data access (ORM) · owns orchestration</div></div><div class="tar">→</div><div class="tier ai"><div class="tl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-1 5 3 3 0 0 0 2 5 3 3 0 0 0 5 1V4a3 3 0 0 0-3-1z"/><path d="M15 3a3 3 0 0 1 3 3 3 3 0 0 1 1 5 3 3 0 0 1-2 5 3 3 0 0 1-5 1"/></svg>Python FastAPI · AI service</div><div class="td">LangGraph pipeline + tools · grounded, cited, guarded</div></div></div><div class="tnote">The Node app owns auth, validation and data, and <b>calls the AI service over HTTP</b> (with a timeout + fallback if it's down). React talks only to Node, never straight to the AI service.</div>
+  <div class="lbl" style="margin-top:28px"><span class="n">08.1</span><h2>Fullstack toolbox (open source)</h2><span class="ln"></span></div>
+  <div class="subh">Frontend</div><div class="tools"><div class="tool"><div class="th"><span class="nm">React</span><span class="lic">MIT</span></div><div class="pp">UI components + state (reused from your Foundation app).</div></div><div class="tool"><div class="th"><span class="nm">Vite</span><span class="lic">MIT</span></div><div class="pp">Dev server + build.</div></div><div class="tool"><div class="th"><span class="nm">React Router</span><span class="lic">MIT</span></div><div class="pp">Routing + protected routes (reuse your auth guard).</div></div><div class="tool"><div class="th"><span class="nm">TanStack Query</span><span class="lic">MIT</span></div><div class="pp">Server-state: fetching, caching, loading/error states (optional but handy).</div></div><div class="tool"><div class="th"><span class="nm">Redux Toolkit</span><span class="lic">MIT</span></div><div class="pp">Shared client state — only if the app genuinely needs it.</div></div></div>
+  <div class="subh">Backend</div><div class="tools"><div class="tool"><div class="th"><span class="nm">Express</span><span class="lic">MIT</span></div><div class="pp">HTTP API (reused). Routes → controllers → services → data access.</div></div><div class="tool"><div class="th"><span class="nm">Zod</span><span class="lic">MIT</span></div><div class="pp">Validate every request body/params; turn failures into structured errors.</div></div><div class="tool"><div class="th"><span class="nm">Prisma</span><span class="lic apache">Apache-2.0</span></div><div class="pp">ORM + typed queries + migrations (or Knex (MIT) / Drizzle (Apache-2.0)).</div></div><div class="tool"><div class="th"><span class="nm">jsonwebtoken</span><span class="lic">MIT</span></div><div class="pp">JWT auth (reused). Plus authz middleware for per-user isolation.</div></div><div class="tool"><div class="th"><span class="nm">bcrypt</span><span class="lic">MIT</span></div><div class="pp">Password hashing (reused).</div></div><div class="tool"><div class="th"><span class="nm">pino</span><span class="lic">MIT</span></div><div class="pp">Structured logging (mask PII).</div></div></div>
+  <div class="subh">Data &amp; tests</div><div class="tools"><div class="tool"><div class="th"><span class="nm">PostgreSQL</span><span class="lic pub">PostgreSQL Lic.</span></div><div class="pp">Relational store for the domain data (or SQLite to start).</div></div><div class="tool"><div class="th"><span class="nm">SQLite</span><span class="lic pub">Public domain</span></div><div class="pp">Zero-setup relational DB — fine for a 4-day build.</div></div><div class="tool"><div class="th"><span class="nm">Vitest / Jest</span><span class="lic">MIT</span></div><div class="pp">Backend unit + integration tests.</div></div><div class="tool"><div class="th"><span class="nm">Supertest</span><span class="lic">MIT</span></div><div class="pp">HTTP endpoint tests (incl. negative + authorization).</div></div><div class="tool"><div class="th"><span class="nm">React Testing Library</span><span class="lic">MIT</span></div><div class="pp">Frontend component tests.</div></div></div>
+</section>
+
+<section class="sec" id="ai">
+  <div class="lbl"><span class="n">09</span><h2>AI engineering</h2><span class="ln"></span></div>
+  <div class="example"><div class="k">The AI requirement</div>Denial classification + grounded appeal drafting that cites only real record evidence (no made up clinical claims). Guardrail: specialist finalises. Eval denial-reason accuracy + appeal groundedness on sample denials.</div>
+  <div class="archnote" style="border-left-color:var(--green);margin-bottom:18px"><b>Keep it lean — you have 4 days.</b> You're reusing your Foundation app, so the login, dashboard and basic API are already done. Spend the time on the AI core. Build <b>one happy path really well</b> + the AI core + a small eval + the safety check. Don't gold-plate. Each layer below is a <b>small slice</b>, not a production build.</div>
+  <p class="note">You should still touch each layer below — it's what you trained on — but a lean version of each is fine:</p>
+  <div class="plat"><div class="pr"><div class="t">Join the parts into one simple pipeline</div><div class="d">Use LangGraph to connect the parts into one clear flow — a few nodes is plenty. Put a limit on every loop and retry.</div></div><div class="pr"><div class="t">Use a fixed data shape at every step</div><div class="d">Pass data between parts in a fixed Pydantic shape. Check every AI output; fix or reject it if it&#x27;s wrong.</div></div><div class="pr"><div class="t">Keep the run&#x27;s state</div><div class="d">Save the run&#x27;s state (LangGraph state) so a step can resume. A simple store is fine — no fancy memory needed.</div></div><div class="pr"><div class="t">Knowledge base + good search</div><div class="d">If the project uses RAG: load the knowledge base into Chroma with LangChain, search by keyword and by meaning, and show where each answer came from. Re-ranking is a nice-to-have.</div></div><div class="pr"><div class="t">A small test set for the AI</div><div class="d">Make a small golden set — about 6–10 examples with the right answers — and score your AI on it (RAGAS for RAG). Show the score.</div></div><div class="pr"><div class="t">Fail the run on bad scores</div><div class="d">If the score is below your bar, the run fails. A broken AI must not pass quietly.</div></div><div class="pr"><div class="t">A quick safety check</div><div class="d">Run a short prompt-injection check (about a dozen prompts with PyRIT or garak) and mask obvious PII with Presidio. For risky steps, wrap the AI in fixed rules so it never makes the dangerous choice alone.</div></div><div class="pr"><div class="t">See what it&#x27;s doing</div><div class="d">Trace the main steps with OpenTelemetry (view in Jaeger, or just the console to start): prompt, time and cost. Add a backup for when the model is busy.</div></div></div>
+
+  <div class="lbl" style="margin-top:30px"><span class="n">09.1</span><h2>Build it with these open-source tools</h2><span class="ln"></span></div>
+  <p class="note">All free, all open source (MIT / Apache-2.0) — this project uses document ingestion. No paid services. You're wiring a <b>small slice</b> of each together — integrating, not mastering them.</p>
+  <div class="tools"><div class="tool"><div class="th"><span class="nm">LangGraph</span><span class="lic">MIT</span></div><div class="pp">Connect the parts into one clear, bounded state-graph — this is your orchestration.</div></div><div class="tool"><div class="th"><span class="nm">LangChain</span><span class="lic">MIT</span></div><div class="pp">LLM calls, prompts, tool-calling, retrievers and output parsing.</div></div><div class="tool"><div class="th"><span class="nm">Pydantic</span><span class="lic">MIT</span></div><div class="pp">The fixed data shape (schema) between every part; check and repair AI outputs.</div></div><div class="tool"><div class="th"><span class="nm">Ollama</span><span class="lic">MIT</span></div><div class="pp">Run the local open-weight LLM (llama3.1 / mistral / qwen2.5).</div></div><div class="tool"><div class="th"><span class="nm">Docling</span><span class="lic">MIT</span></div><div class="pp">Parse PDFs / DOCX / scanned files into clean text + tables for ingestion.</div></div><div class="tool"><div class="th"><span class="nm">OpenTelemetry</span><span class="lic apache">Apache-2.0</span></div><div class="pp">Trace the main steps — prompt, time, cost. Start with the console; Jaeger is optional.</div></div><div class="tool"><div class="th"><span class="nm">OpenLLMetry</span><span class="lic apache">Apache-2.0</span></div><div class="pp">One line to send OTel spans for your LLM/LangChain calls (adds token + cost).</div></div><div class="tool"><div class="th"><span class="nm">Jaeger</span><span class="lic apache">Apache-2.0</span></div><div class="pp">Optional local viewer for the traces (run it in Docker when you want a UI).</div></div><div class="tool"><div class="th"><span class="nm">Presidio</span><span class="lic">MIT</span></div><div class="pp">Mask the obvious PII / PHI in inputs, logs and prompts.</div></div><div class="tool"><div class="th"><span class="nm">PyRIT</span><span class="lic">MIT</span></div><div class="pp">A short prompt-injection / jailbreak check (about a dozen prompts) that must pass.</div></div><div class="tool"><div class="th"><span class="nm">garak</span><span class="lic apache">Apache-2.0</span></div><div class="pp">A quick scan for injection / leak weaknesses (a light scan is fine).</div></div><div class="tool"><div class="th"><span class="nm">pytest</span><span class="lic">MIT</span></div><div class="pp">Unit, integration, negative and authorization/isolation tests.</div></div></div>
+  <div class="archnote"><b>How it fits together:</b> Keep your existing Node/Express app for the product API + auth (reused from the Foundation) and the React frontend as-is — that&#x27;s most of the app, already done. Add one small Python FastAPI &quot;AI service&quot; (a handful of endpoints) that runs the LangGraph pipeline and the AI tools; the Node app calls it over HTTP. That&#x27;s the only new runtime.</div>
+</section>
+
+<section class="sec" id="ui">
+  <div class="lbl"><span class="n">10</span><h2>UI / screens</h2><span class="ln"></span></div>
+  <ul class="ab"><li>Denial intake</li><li>Reason + required-evidence view</li><li>Appeal draft with citations</li><li>Review &amp; finalise</li></ul>
+</section>
+
+<section class="sec" id="nfr">
+  <div class="lbl"><span class="n">11</span><h2>Non-functional requirements</h2><span class="ln"></span></div>
+  <ul class="ab"><li>Appeal cites only real evidence</li><li>No made up clinical statements</li><li>Human finalises</li></ul>
+</section>
+
+<section class="sec" id="build">
+  <div class="lbl"><span class="n">12</span><h2>Build path — four days</h2><span class="ln"></span></div>
+  <div class="days"><div class="day"><div class="dh"><span class="dn">DAY 1</span><span class="dt">Understand &amp; define</span></div><ul><li>Read this brief + the domain primer until the problem is clear. List every unclear point as a question.</li><li>Write the PRD: scope with MoSCoW + RICE, lay it out Now / Next / Later, cut an honest MVP.</li><li>Lock the 2–3 success metrics (below). Write user stories with testable acceptance criteria as GitHub issues.</li><li>Sketch the UX: the primary journey + screen states (empty / loading / error / success).</li></ul><div class="gate"><b>Gate:</b> PRD + prioritised backlog + wireframes reviewed. Scope signed off before code.</div></div><div class="day"><div class="dh"><span class="dn">DAY 2</span><span class="dt">Reuse base, design data &amp; backend</span></div><ul><li>Branch from your Foundation app (React + Node + JWT login/registration/dashboard). Reuse auth, structure, middleware — do not scaffold fresh.</li><li>Design the data model (ERD + schema) from the entities below. Normalise. Handle PII.</li><li>Write the OpenAPI contract. Build the core endpoints with validation, structured errors, logging and JWT.</li><li>Stand up the component skeleton from the architecture — stub each part behind a typed contract.</li></ul><div class="gate"><b>Gate:</b> ERD + API contract + working auth'd endpoints reviewed.</div></div><div class="day"><div class="dh"><span class="dn">DAY 3</span><span class="dt">Frontend + the AI core (lean)</span></div><ul><li>Build the React screens against the real APIs with honest loading/error states (reuse your dashboard shell).</li><li>Build the AI core: a few-node LangGraph wiring the parts, Pydantic schemas, bounded retries.</li><li>Where RAG is used: seed the Chroma KB, retrieve + cite on every answer (re-rank optional).</li><li>Add grounding + the deterministic safety wrapper. Start a small golden set (6–10 cases).</li></ul><div class="gate"><b>Gate:</b> A working vertical slice — requirement → UI → API → data → AI output, grounded and checked.</div></div><div class="day"><div class="dh"><span class="dn">DAY 4</span><span class="dt">Harden, check &amp; present</span></div><ul><li>Integration + negative + authorization/isolation tests.</li><li>Score the golden set (RAGAS for RAG); wire the eval-gate. A quick injection check (PyRIT/garak) + PII masking (Presidio).</li><li>Basic OpenTelemetry trace of the main steps. README + architecture notes. Confirm issue→commit traceability.</li><li>Rehearse. Demo end-to-end + system-design viva.</li></ul><div class="gate"><b>Gate:</b> Final demo + viva. Eval + safety results shown. Repo + traceability walked.</div></div></div>
+</section>
+
+<section class="sec" id="prove">
+  <div class="lbl"><span class="n">13</span><h2>What the build must prove</h2><span class="ln"></span></div>
+  <div class="success"><div class="k">Measured outcomes</div><ul><li><span class="ck">✓</span><span>Denial-reason classification accuracy</span></li><li><span class="ck">✓</span><span>Appeal groundedness</span></li><li><span class="ck">✓</span><span>Evidence-completeness of drafts</span></li></ul></div>
+  <div style="margin-top:14px"><div class="card goal"><div class="k">Stretch goals (only after the MVP is solid)</div><div class="v"><ul class="ab"><li>Appeal-success likelihood estimate</li><li>Batch-prioritise denials by recoverable value</li></ul></div></div></div>
+</section>
+
+<section class="sec" id="deliver">
+  <div class="lbl"><span class="n">14</span><h2>Deliverables</h2><span class="ln"></span></div>
+  <ul class="ticks"><li><span class="ck">✓</span><span>The components above wired into one explicit, bounded pipeline — runs end to end.</span></li><li><span class="ck">✓</span><span>Data model (ERD + schema) + a seeded synthetic dataset.</span></li><li><span class="ck">✓</span><span>React app on your reused Foundation base, with real auth and honest states.</span></li><li><span class="ck">✓</span><span>The AI core: grounded, cited, guardrailed; typed schemas; bounded retries.</span></li><li><span class="ck">✓</span><span>Seeded Chroma KB with retrieval + citations (re-ranking optional) — if the project uses RAG.</span></li><li><span class="ck">✓</span><span>A small golden set (6–10 cases) + the named metric reported; eval-gated run.</span></li><li><span class="ck">✓</span><span>A quick safety check passing: prompt-injection (PyRIT/garak) + PII masking (Presidio).</span></li><li><span class="ck">✓</span><span>Basic OpenTelemetry trace of the main steps, plus a README + architecture notes.</span></li></ul>
+</section>
+
+<section class="sec" id="rules">
+  <div class="lbl"><span class="n">15</span><h2>Ground rules</h2><span class="ln"></span></div>
+  <div class="rules"><div class="rule"><span class="d"></span><span>Open-source only — local LLM via Ollama, open embeddings, open vector DB. No paid keys, no secrets in the repo.</span></div><div class="rule"><span class="d"></span><span>Reuse the open code you already built in the Foundation. Don&#x27;t re-earn marks for boilerplate.</span></div><div class="rule"><span class="d"></span><span>Synthetic data only. No real customer / patient / financial PII, ever.</span></div><div class="rule"><span class="d"></span><span>The AI must be grounded — cite sources, refuse when unsupported, never make up facts or figures.</span></div><div class="rule"><span class="d"></span><span>Safety-critical flows wrap the LLM in deterministic rules — the model never makes the dangerous call alone.</span></div><div class="rule"><span class="d"></span><span>Bound every loop and retry. Trace it and gate it — failing evals fail the run.</span></div><div class="rule"><span class="d"></span><span>Traceability is graded: every requirement → a GitHub issue → commits that reference it.</span></div><div class="rule"><span class="d"></span><span>MIT-licensed — use it, change it, keep your work.</span></div></div>
+</section>
+
+<section class="sec" id="viva">
+  <div class="lbl"><span class="n">16</span><h2>Defend your design — viva</h2><span class="ln"></span></div>
+  <p class="note">You will be asked these. "The AI did it" is not an answer.</p>
+  <div class="viva"><div class="q"><span class="n">1</span><span>Show an appeal and trace each claim to the record.</span></div><div class="q"><span class="n">2</span><span>How do you stop made up clinical justification?</span></div><div class="q"><span class="n">3</span><span>Report denial-reason accuracy.</span></div></div>
+</section>
+
+</main>
+<footer><div class="wrap f"><span>Fresher Engineering Enablement</span><span>HLT-06 · The Full Lifecycle Bootcamp</span></div></footer>
+</body>
+</html>

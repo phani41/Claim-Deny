@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hlt06-ai-service"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic>=2.10",
+  "pydantic-settings",
+  "langgraph",
+  "langchain",
+  "langchain-openai",
+  "docling"
+]
+
+[tool.setuptools]
+packages = ["app", "pipeline", "llm"]

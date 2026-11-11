@@ -1,0 +1,108 @@
+%PDF-1.4
+1 0 obj
+<</Type /Catalog /Pages 2 0 R>>
+endobj
+2 0 obj
+<</Type /Pages /Kids [6 0 R] /Count 1>>
+endobj
+3 0 obj
+<</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+endobj
+4 0 obj
+<</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold>>
+endobj
+5 0 obj
+<</Font <</F1 3 0 R /F2 4 0 R>>>>
+endobj
+6 0 obj
+<</Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources 5 0 R>>
+endobj
+7 0 obj
+<</Length 1954>>
+stream
+BT
+/F1 8 Tf
+50 760 Td
+(Document Page 1 of 1 | Knowledge Base Reference) Tj
+ET
+BT
+50 720 Td
+/F2 14 Tf
+(Healthcare Insurance Claim Denial Code Master Reference Guide) Tj
+0 -14 Td
+/F1 9 Tf
+(==========================================================================) Tj
+0 -14 Td
+/F1 9 Tf
+(Official Healthcare & Insurance Knowledge Document) Tj
+0 -14 Td
+0 -14 Td
+/F2 11 Tf
+(SECTION: Standard Denial Codes & Definitions) Tj
+0 -14 Td
+/F1 8 Tf
+(--------------------------------------------------------------------------) Tj
+0 -14 Td
+/F1 9 Tf
+(AUTH-01  Prior Authorization Missing : Elective procedure performed without) Tj
+0 -14 Td
+/F1 9 Tf
+(pre-approval or emergency intimation exceeded window. MED-01  Medical Necessity Not) Tj
+0 -14 Td
+/F1 9 Tf
+(Established : Clinical evidence fails to justify acute hospitalization or chosen) Tj
+0 -14 Td
+/F1 9 Tf
+(surgical procedure over conservative alternatives. DOC-01  Insufficient Clinical) Tj
+0 -14 Td
+/F1 9 Tf
+(Documentation : Critical records  operative notes, lab results, imaging reports ) Tj
+0 -14 Td
+/F1 9 Tf
+(omitted from dossier. POLICY-01  Policy Exclusion / Waiting Period : Condition falls) Tj
+0 -14 Td
+/F1 9 Tf
+(under statutory waiting period or policy general exclusion. TIMELY-01  Timely Filing) Tj
+0 -14 Td
+/F1 9 Tf
+(Exceeded : Claim submitted beyond the 30-day post-discharge window.) Tj
+0 -14 Td
+0 -14 Td
+/F2 11 Tf
+(SECTION: Denial Adjudication Standards for Reviewers) Tj
+0 -14 Td
+/F1 8 Tf
+(--------------------------------------------------------------------------) Tj
+0 -14 Td
+/F1 9 Tf
+(Insurance compliance reviewers must cite specific contract clauses when issuing claim) Tj
+0 -14 Td
+/F1 9 Tf
+(denials. A generic statement such as 'not covered' is invalid. The reviewer must) Tj
+0 -14 Td
+/F1 9 Tf
+(state the exact clause number, explain what clinical evidence is lacking, and) Tj
+0 -14 Td
+/F1 9 Tf
+(identify the required remedial documents for hospital reconsideration.) Tj
+0 -14 Td
+0 -14 Td
+ET
+
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000056 00000 n 
+0000000111 00000 n 
+0000000179 00000 n 
+0000000252 00000 n 
+0000000301 00000 n 
+0000000403 00000 n 
+trailer
+<</Size 8 /Root 1 0 R>>
+startxref
+2407
+%%EOF

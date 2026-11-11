@@ -1,0 +1,42 @@
+{
+  "name": "hlt06-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --watch-path=src src/server.js",
+    "start": "node src/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "prisma:format": "prisma format",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:clean": "node scripts/clean_data.js",
+    "db:view": "node scripts/view_data.js",
+    "db:studio": "node scripts/studio.js",
+    "eval": "node ../evals/run_eval.js",
+    "test": "node scripts/test.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "bcryptjs": "^3.0.0",
+    "better-sqlite3": "^12.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^5.1.0",
+    "helmet": "latest",
+    "jsonwebtoken": "^9.0.0",
+    "multer": "^2.0.2",
+    "pino": "latest",
+    "pino-http": "latest",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": { "prisma": "^7.0.0" },
+  "allowScripts": {
+    "@prisma/engines@7.10.1": true,
+    "better-sqlite3@12.11.1": true,
+    "prisma@7.10.1": true
+  }
+}
